@@ -160,44 +160,71 @@ def calculer(d):
     }
 
 def format_result(d, r):
-    machine_label = d.get("machine_label", "SPA")
-    txt = (
-        f"🫒 *SIMULATION RÉCOLTE OLIVES — STIHL*\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"*📐 PLANTATION*\n"
-        f"Écartement : {d['ecart_arbre']}m × {d['ecart_ligne']}m\n"
-        f"Arbres/ha : *{r['arbres_ha']}*\n"
-        f"Total arbres : *{r['total_arbres']:.0f}*\n"
-        f"Production ferme : *{r['prod_ferme_t']} tonnes*\n\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"*📊 COMPARATIF TERRAIN*\n\n"
-        f"```\n"
-        f"{'Indicateur':<25} {'Manuel':>10} {machine_label:>10}\n"
-        f"{'─'*47}\n"
-        f"{'Durée/arbre':<25} {str(d['dur_manuel'])+'min':>10} {str(d['dur_machine'])+'min':>10}\n"
-        f"{'Arbres/jour/équipe':<25} {r['arbres_j_manuel']:>10} {r['arbres_j_machine']:>10}\n"
-        f"{'Production/jour (kg)':<25} {r['prod_j_manuel']:>10} {r['prod_j_machine']:>10}\n"
-        f"{'Jours/ha':<25} {r['jours_ha_manuel']:>10} {r['jours_ha_machine']:>10}\n"
-        f"{'Jours ferme (1 équipe)':<25} {r['jours_ferme_manuel']:>10.0f} {r['jours_ferme_machine']:>10.0f}\n"
-        f"{'Équipes (objectif {d[\"duree_camp\"]}j)':<25} {r['equipes_manuel']:>10} {r['equipes_machine']:>10}\n"
-        f"{'─'*47}\n"
-        f"{'Coût/kg (DH)':<25} {r['cout_manuel_kg']:>10} {r['cout_machine_kg']:>10}\n"
-        f"{'Coût/ha (DH)':<25} {r['cout_manuel_ha']:>10} {r['cout_machine_ha']:>10}\n"
-        f"{'Coût ferme (DH)':<25} {r['cout_manuel_ferme']:>10} {r['cout_machine_ferme']:>10}\n"
-        f"```\n\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"*💡 KPI DÉCISION*\n\n"
-        f"⏱ Gain de temps : *{r['gain_jours_ferme']:.0f} jours* sur la ferme ({r['gain_pct']:.0f}%)\n"
-        f"💰 Économie/ha : *{r['economie_ha']:,} DH*\n"
-        f"💰 Économie totale : *{r['economie_ferme']:,} DH*\n"
-        f"💰 Économie/kg : *{r['economie_kg']} DH*\n"
-    )
+    ml = d.get("machine_label", "SPA")
+    dc = d["duree_camp"]
+    lines = [
+        "Duree/arbre",
+        "Arbres/j/equipe",
+        "Production/j kg",
+        "Jours/ha",
+        "Jours ferme 1eq",
+        f"Equipes obj{dc}j",
+        "---",
+        "Cout/kg DH",
+        "Cout/ha DH",
+        "Cout ferme DH",
+    ]
+    vals_m = [
+        f"{d['dur_manuel']}min",
+        str(r['arbres_j_manuel']),
+        str(r['prod_j_manuel']),
+        str(r['jours_ha_manuel']),
+        f"{r['jours_ferme_manuel']:.0f}",
+        str(r['equipes_manuel']),
+        "---",
+        str(r['cout_manuel_kg']),
+        str(r['cout_manuel_ha']),
+        str(r['cout_manuel_ferme']),
+    ]
+    vals_mc = [
+        f"{d['dur_machine']}min",
+        str(r['arbres_j_machine']),
+        str(r['prod_j_machine']),
+        str(r['jours_ha_machine']),
+        f"{r['jours_ferme_machine']:.0f}",
+        str(r['equipes_machine']),
+        "---",
+        str(r['cout_machine_kg']),
+        str(r['cout_machine_ha']),
+        str(r['cout_machine_ferme']),
+    ]
+    rows = [f"{'':20} {'Manuel':>8} {ml:>8}"]
+    rows.append("-"*38)
+    for l, m, mc in zip(lines, vals_m, vals_mc):
+        if l == "---":
+            rows.append("-"*38)
+        else:
+            rows.append(f"{l:<20} {m:>8} {mc:>8}")
+    table = "\n".join(rows)
+
+    txt = "\U0001fad2 *SIMULATION RECOLTE OLIVES - STIHL*\n"
+    txt += f"Ecartement: {d['ecart_arbre']}m x {d['ecart_ligne']}m\n"
+    txt += f"Arbres/ha: *{r['arbres_ha']}* | Total: *{r['total_arbres']:.0f}*\n"
+    txt += f"Production: *{r['prod_ferme_t']} tonnes*\n\n"
+    txt += "*COMPARATIF TERRAIN*\n"
+    txt += "```\n" + table + "\n```\n\n"
+    txt += "*KPI DECISION*\n"
+    txt += f"Gain temps: *{r['gain_jours_ferme']:.0f} jours* ({r['gain_pct']:.0f}%)\n"
+    txt += f"Economie/ha: *{r['economie_ha']:,} DH*\n"
+    txt += f"Economie totale: *{r['economie_ferme']:,} DH*\n"
+    txt += f"Economie/kg: *{r['economie_kg']} DH*\n"
     if r["investissement"] > 0:
-        txt += f"🔧 Investissement : *{r['investissement']:,} DH*\n"
+        txt += f"Investissement: *{r['investissement']:,} DH*\n"
     if r["payback"]:
-        txt += f"📈 Payback : *{r['payback']} saisons*\n"
-    txt += f"\n_Tape /simulation pour une nouvelle simulation_"
+        txt += f"Payback: *{r['payback']} saisons*\n"
+    txt += "\n_/simulation pour recommencer_"
     return txt
+
 
 # ── PDF ──────────────────────────────────────────────────
 _n = [0]
